@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, jsonify
-from flask_mysqldb import MySQL
+from flask_mysqldb import MySQL, MySQLdb
 import pandas as pd
 import os
 import openpyxl
@@ -47,100 +47,42 @@ def student():
     cur.close()
     return render_template('student.html', data=data, student_count=student_count)
 
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('query')
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM timed WHERE username LIKE %s", ('%' + query + '%',))
-    results = cur.fetchall()
-    return render_template('student.html', results=results)
+
+@app.route('/view/<int:id>')
+def view(id):
+    return f'Viewing row  with ID {id}'
+
+@app.route('/modify/<int:id>')
+def modify(id):
+    return f'Modifying row  with ID {id}'
 
 @app.route('/upload', methods=['GET'])
 def upload():
     return render_template('upload.html',)
 
-# @app.route('/search', methods=['GET', 'POST'])
-# def search():
-#   if request.method == 'POST':
-#     search_term = request.form['search']
-#     cur = mysql.connection.cursor()
-#     query = "SELECT * FROM timed WHERE username = %s"
-#     cur.execute(query, ('%' + search_term + '%',))
-#     results = cur.fetchall()
-#     cur.close()
-#     return render_template('admin.html', results=results)
-#   return render_template('search.html')
 
-# @app.route('/search', methods=['GET', 'POST'])
-# def search():
-#     if request.method == "POST":
-#         # Connect to your MySQL database (or any other database)
-#         cur = mysql.connection.cursor()
-#         # Execute the search query
-#         cur.execute('''SELECT * FROM timed WHERE username = %s''', request.form['search'])
-
-#         # Process the results (you can print or return them)
-#         for r in cur.fetchall():
-#             print(r[0], r[1], r[2])
-
-#         # Redirect back to the search page
-#         return redirect(url_for('search'))
-#     return render_template('search.html')
-
-    # Render the search form
- 
-
-# @app.route('/upload')
-# def upload():
-#     return render_template('upload.html')
-
-# # @app.route('/view', methods=['POST'])
-# # def view():
-# #     file = request.files['file']
-# #     file.save(file.filename)
-# #     data = pd.read_excel(file)
-# #     return data.to_html()
-
-
-# @app.route('/view', methods=['GET','POST'])
-# def view():
-#     if request.method==['POST']:
-#         file = request.file['file']
-#         wb = openpyxl.load_workbook(file)
-#         sheet = wb.active
-#         cursor = mysql.connection.cursor()
-#         for row in sheet.filter_rows(values_only=True):
-#             cursor.execute("INSERT INTO ecommerce (username, email,password) VALUES(%s,%s,%s)",row)
-#             mysql.connection.commit()
-#             return jsonify({'message': 'Data Uploaded Successfully'})
-#         return render_template('upload.html')
+@app.route('/reg', methods=['GET', 'POST'])
+def reg():
+    if request.method == 'POST' and 'id' in request.form and 'firstname' in request.form and 'lastname' in request.form and 'address' in request.form and 'mobile' in request.form and 'age' in request.form and 'email' in request.form and 'password' in request.form:
+        id = request.form['id']
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
+        address = request.form['address']
+        mobile = request.form['mobile']
+        age = request.form['age']
+        email = request.form['email']
+        password = request.form['password']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor = mysql.connection.cursor()
+        cursor.execute('INSERT INTO register VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (id, firstname, lastname, address, mobile, age, email, password))        
+        mysql.connection.commit()
+        msg = 'Registration Successfully'
+        return render_template('table.html')
+    elif request.method == 'POST':
+        msg = 'Please Fill out form'
+    return render_template('register.html')
     
 
-
-# @app.route('/', methods=['GET', 'POST'])
-# def upload():
-#     if request.method == 'POST':
-#         file = request.files['file']
-
-#         upload=upload(filename=file.filename, data=file.read())
-#         db.session.add(upload)
-#         db.session.commit()
-
-#         return f'Uplaodded: {file.filename}'
-#     return render_template('file_upload.html')
-
-# @app.route('/upload', methods=['POST'])
-# def file_upload():
-#     if 'file' in request.files:
-#         file = request.files['file']
-#         if file and allowed_file(file.filename):
-#             filename = secure_filename(file,filename)
-#             return 'file uploaded seccessfully'
-#         return 'File upload failed'
-#     return render_template('upload-file.html')
-    
-# def allowed_file(filename):
-#     return'.' in filename and filename.rsplict('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 if '__main__' == __name__:
     app.run(debug=True)
